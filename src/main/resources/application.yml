@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: product-catalog-svc
+server:
+  port: 8081
+aws:
+  dynamodb:
+    endpoint: https://dynamodb.ap-south-1.amazonaws.com  # For local: http://localhost:8000
+    region: ap-south-1
+logging:
+  level:
+    root: INFO
