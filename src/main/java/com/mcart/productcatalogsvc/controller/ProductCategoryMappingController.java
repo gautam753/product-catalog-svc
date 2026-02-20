@@ -9,7 +9,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/product-category-mapping")
+@RequestMapping("/product-category-mapping")
 public class ProductCategoryMappingController {
 
     private final ProductCategoryMappingService mappingService;

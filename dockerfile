@@ -4,4 +4,4 @@ COPY ${JAR_FILE} product-catalog-svc.jar
 ENV JAVA_OPTS="-Xms512m -Xmx1024m"
 ENTRYPOINT ["java","-jar","/product-catalog-svc.jar"]
 RUN mkdir -p /logs && chmod 777 /logs
-EXPOSE 8081
+EXPOSE 8050
