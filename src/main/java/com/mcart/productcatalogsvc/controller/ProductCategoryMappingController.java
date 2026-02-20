@@ -1,6 +1,5 @@
 package com.mcart.productcatalogsvc.controller;
 
-import com.mcart.productcatalogsvc.model.ProductCategoryMappingDto;
 import com.mcart.productcatalogsvc.service.ProductCategoryMappingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
