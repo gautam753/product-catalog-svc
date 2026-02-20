@@ -3,7 +3,6 @@ package com.mcart.productcatalogsvc.controller;
 import com.mcart.productcatalogsvc.model.ProductCategoryMappingDto;
 import com.mcart.productcatalogsvc.service.ProductCategoryMappingService;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
