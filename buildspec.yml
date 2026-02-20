@@ -1,7 +1,7 @@
 version: 0.2
 env:
   variables:
-    #ECR_REGISTRY: "894261762105.dkr.ecr.ap-south-1.amazonaws.com"
+    ECR_REGISTRY: "894261762105.dkr.ecr.ap-south-1.amazonaws.com"
     #ECR_REPOSITORY: "product-catalog-svc"
     #IMAGE_TAG: "${CODEBUILD_RESOLVED_SOURCE_VERSION}"
     EKS_CLUSTERNAME: "nagp-eks-cluster"
