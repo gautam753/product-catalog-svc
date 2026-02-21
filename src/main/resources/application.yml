@@ -19,7 +19,7 @@ management:
       group:
         readiness:
           # Include readiness state + your actual dependencies
-          include: readinessState, db, redis
+          include: readinessState
         liveness:
           # Keep liveness minimal so transient DB blips don't restart the pod
           include: livenessState
