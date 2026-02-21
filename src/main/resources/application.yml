@@ -3,6 +3,28 @@ spring:
     name: product-catalog-svc
 server:
   port: 8050
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expose only what's necessary to reduce attack surface
+        include: health, info, prometheus, metrics 
+  endpoint:
+    health:
+      # Required for /actuator/health/liveness and /actuator/health/readiness
+      probes:
+        enabled: true
+      # Shows details (like DB status) to help you debug why it's DOWN
+      show-details: always 
+      group:
+        readiness:
+          # Include readiness state + your actual dependencies
+          include: readinessState, db, redis
+        liveness:
+          # Keep liveness minimal so transient DB blips don't restart the pod
+          include: livenessState
+  server:
+    port: 8051 # Actuator will now live on 8081
 aws:
   dynamodb:
     region: ap-south-1
