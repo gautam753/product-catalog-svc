@@ -4,7 +4,7 @@ env:
     ECR_REGISTRY: "894261762105.dkr.ecr.ap-south-1.amazonaws.com"
     #ECR_REPOSITORY: "product-catalog-svc"
     #IMAGE_TAG: "${CODEBUILD_RESOLVED_SOURCE_VERSION}"
-    EKS_CLUSTERNAME: "nagp-eks-cluster"
+    EKS_CLUSTERNAME: "mcartnagp-eks-cluster"
     #EKS_ROLE_ARN: "arn:aws:iam::894261762105:role/codebuild-product-catalog-role"
     EKS_ROLE_ARN: "arn:aws:iam::894261762105:role/codebuild-eks-access-role"
     REPOSITORY_URL: "894261762105.dkr.ecr.ap-south-1.amazonaws.com/product-catalog-svc"
