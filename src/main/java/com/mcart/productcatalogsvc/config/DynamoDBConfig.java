@@ -18,17 +18,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class DynamoDBConfig {
 
-    @Value("${aws.dynamodb.endpoint:null}")
-    private String dynamoEndpoint;
-
     @Value("${aws.dynamodb.region}")
     private String region;
-
-    @Value("${aws.dynamodb.accessKey:null}")
-    private String accessKey;
-
-    @Value("${aws.dynamodb.secretKey:null}")
-    private String secretKey;
 
     /*@Bean
     public DynamoDbAsyncClient dynamoDbAsyncClient() {
@@ -54,20 +45,8 @@ public class DynamoDBConfig {
                         .region(Region.of(region))
                         .httpClient(NettyNioAsyncHttpClient.builder().build());
 
-        // LOCAL PROFILE → Static Credentials + Endpoint Override
-        if (dynamoEndpoint != null && !dynamoEndpoint.isBlank()) {
-
-            builder.endpointOverride(URI.create(dynamoEndpoint))
-                   .credentialsProvider(
-                       StaticCredentialsProvider.create(
-                           AwsBasicCredentials.create(accessKey, secretKey)
-                       )
-                   );
-
-        } else {
-            // AWS PROFILE → IAM Role / IRSA / EC2 Role / ECS Task Role
-            builder.credentialsProvider(DefaultCredentialsProvider.create());
-        }
+        // AWS PROFILE → IAM Role / IRSA / EC2 Role / ECS Task Role
+        builder.credentialsProvider(DefaultCredentialsProvider.create());
 
         return builder.build();
     }
