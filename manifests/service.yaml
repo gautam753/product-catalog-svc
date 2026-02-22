@@ -6,7 +6,7 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: userservice
+    app: productcatalogsvc
   ports:
       # By default and for convenience, the `targetPort` is set to the same value as the `port` field.
     - port: 8050
