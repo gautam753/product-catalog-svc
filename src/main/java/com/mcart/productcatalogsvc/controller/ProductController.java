@@ -1,6 +1,8 @@
 package com.mcart.productcatalogsvc.controller;
 
+import com.mcart.productcatalogsvc.model.CategoryFilterOptionsDto;
 import com.mcart.productcatalogsvc.model.ProductDto;
+import com.mcart.productcatalogsvc.model.ProductFilterDto;
 import com.mcart.productcatalogsvc.service.ProductService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +42,27 @@ public class ProductController {
     @GetMapping("/brand/{brandId}")
     public Flux<ProductDto> getProductsByBrand(@PathVariable String brandId) {
         return productService.getProductsByBrand(brandId);
+    }
+    
+    @GetMapping("/filter")
+    public Flux<ProductDto> filterProducts(
+            @ModelAttribute ProductFilterDto filter) {
+        // Optional: add default values
+        if (filter.getPage() == null) filter.setPage(0);
+        if (filter.getSize() == null) filter.setSize(20);
+        if (filter.getIsActive() == null) filter.setIsActive(true);
+
+        return productService.filterProducts(filter);
+    }
+    
+    /**
+     * Get all available filter options for a category
+     * Used in frontend to build filter sidebar (brands, sizes, colors, price range, etc.)
+     */
+    @GetMapping("/filter-options")
+    public Mono<CategoryFilterOptionsDto> getFilterOptions(
+            @RequestParam String categoryId) {
+        return productService.getFilterOptionsByCategory(categoryId);
     }
 
     // Optional: Add more filters (category, price range, etc.) later

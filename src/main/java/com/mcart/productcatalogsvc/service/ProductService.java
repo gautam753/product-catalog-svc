@@ -1,6 +1,8 @@
 package com.mcart.productcatalogsvc.service;
 
+import com.mcart.productcatalogsvc.model.CategoryFilterOptionsDto;
 import com.mcart.productcatalogsvc.model.ProductDto;
+import com.mcart.productcatalogsvc.model.ProductFilterDto;
 import com.mcart.productcatalogsvc.entity.Product;
 import com.mcart.productcatalogsvc.repository.ProductRepository;
 import org.springframework.stereotype.Service;
@@ -62,5 +64,14 @@ public class ProductService {
             .gender(product.getGender())
             .isActive(product.getIsActive())
             .build();
+    }
+    
+    public Flux<ProductDto> filterProducts(ProductFilterDto filter) {
+        return productRepository.filterProducts(filter)
+            .map(this::toDto);
+    }
+    
+    public Mono<CategoryFilterOptionsDto> getFilterOptionsByCategory(String categoryId) {
+        return productRepository.getFilterOptionsByCategory(categoryId);
     }
 }

@@ -24,7 +24,10 @@ management:
           # Keep liveness minimal so transient DB blips don't restart the pod
           include: livenessState
   server:
-    port: 8051 # Actuator will now live on 8081
+    port: 8051
+springdoc:
+  swagger-ui:
+    enabled: true
 aws:
   dynamodb:
     region: ap-south-1

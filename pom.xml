@@ -39,6 +39,10 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
+		<!--<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+		</dependency>-->
 	    <!-- AWS SDK v2 – core + enhanced client (reactive) -->
 	    <dependency>
 	        <groupId>software.amazon.awssdk</groupId>
@@ -75,6 +79,12 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 		</dependency>
+		<!-- Springdoc OpenAPI + Swagger UI for WebFlux -->
+	    <dependency>
+	        <groupId>org.springdoc</groupId>
+	        <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+	        <version>2.6.0</version> <!-- latest stable as of 2026 -->
+	    </dependency>
     </dependencies>
 
     <build>
