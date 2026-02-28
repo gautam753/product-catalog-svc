@@ -2,7 +2,6 @@ package com.mcart.productcatalogsvc;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
@@ -14,7 +13,6 @@ import io.swagger.v3.oas.annotations.info.Info;
 	    )
 	)
 @SpringBootApplication
-@EnableR2dbcRepositories(basePackages = "com.mcart.productcatalogsvc.repository")
 public class ProductCatalogSvcApplication {
 
 	public static void main(String[] args) {

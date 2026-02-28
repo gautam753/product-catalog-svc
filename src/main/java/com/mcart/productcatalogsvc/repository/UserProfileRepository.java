@@ -1,11 +1,11 @@
 package com.mcart.productcatalogsvc.repository;
 
-import java.util.UUID;
-
-import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
 import com.mcart.productcatalogsvc.entity.UserProfile;
 
+import java.util.UUID;
+
 public interface UserProfileRepository
-        extends R2dbcRepository<UserProfile, UUID> {
+        extends ReactiveCrudRepository<UserProfile, UUID> {
 }
