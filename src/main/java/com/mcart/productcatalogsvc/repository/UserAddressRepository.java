@@ -1,15 +1,15 @@
 package com.mcart.productcatalogsvc.repository;
 
-import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import java.util.UUID;
+
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
 
 import com.mcart.productcatalogsvc.entity.UserAddress;
 
 import reactor.core.publisher.Flux;
 
-import java.util.UUID;
-
 public interface UserAddressRepository
-        extends ReactiveCrudRepository<UserAddress, UUID> {
+        extends R2dbcRepository<UserAddress, UUID> {
 
     Flux<UserAddress> findByUserId(UUID userId);
 
