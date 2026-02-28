@@ -23,6 +23,9 @@ spec:
       containers:
         - name: productcatalogsvc
           image: CONTAINER_IMAGE
+          envFrom:
+          - secretRef:
+              name: mcart-db-secret
           securityContext:
             allowPrivilegeEscalation: false
             seccompProfile:
