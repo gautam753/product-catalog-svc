@@ -11,12 +11,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hilton.recommendationservice.controller.AggregateDataController;
 import com.mcart.productcatalogsvc.model.CartItemRequestDto;
 import com.mcart.productcatalogsvc.model.CartResponseDto;
 import com.mcart.productcatalogsvc.service.CartService;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @RestController
 @RequestMapping("/cart")
 public class CartController {
@@ -47,7 +50,7 @@ public class CartController {
             @RequestHeader(value = "authoeized-user-id", required = false) String authorizedUserId
             //@AuthenticationPrincipal Jwt jwt
             ) {
-
+    	log.info("authoeized-user-id: {}, X-Guest-Token: {}", authorizedUserId, guestToken);
         String userId = (authorizedUserId/*jwt*/ != null) ? authorizedUserId/*jwt.getSubject()*/ : null;
         return cartService.getCart(userId, guestToken);
     }

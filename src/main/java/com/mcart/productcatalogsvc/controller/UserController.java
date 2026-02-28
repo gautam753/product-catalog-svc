@@ -18,9 +18,11 @@ import com.mcart.productcatalogsvc.entity.UserProfile;
 import com.mcart.productcatalogsvc.service.UserService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -34,7 +36,8 @@ public class UserController {
 
     @GetMapping("/me")
     public Mono<UserAccount> getMyAccount(@RequestHeader(value = "authoeized-user-id", required = false) String authorizedUserId) {
-        UUID userId = UUID.fromString(authorizedUserId);
+    	log.info("authoeized-user-id: {}", authorizedUserId);
+    	UUID userId = UUID.fromString(authorizedUserId);
         return userService.getAccount(userId);
     }
 
