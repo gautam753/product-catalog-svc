@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.hilton.recommendationservice.controller.AggregateDataController;
 import com.mcart.productcatalogsvc.model.CartItemRequestDto;
 import com.mcart.productcatalogsvc.model.CartResponseDto;
 import com.mcart.productcatalogsvc.service.CartService;
