@@ -1,5 +1,8 @@
 package com.mcart.productcatalogsvc.controller;
 
+import java.util.Map;
+
+import org.springframework.http.server.reactive.ServerHttpRequest;
 //import org.springframework.security.core.annotation.AuthenticationPrincipal;
 //import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,6 +30,13 @@ public class CartController {
 
     public CartController(CartService cartService) {
         this.cartService = cartService;
+    }
+    
+    @GetMapping("/debug")
+    public Mono<Map<String, String>> headers(ServerHttpRequest request) {
+        return Mono.just(
+            request.getHeaders().toSingleValueMap()
+        );
     }
 
     // POST /api/cart/add
