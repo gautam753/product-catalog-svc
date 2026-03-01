@@ -42,8 +42,8 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /swagger-ui.html
-  api-docs:
-    path: /v3/api-docs
+    config-url: /prod/api/v3/api-docs/swagger-config
+    url: /prod/api/v3/api-docs
 aws:
   dynamodb:
     region: ap-south-1
