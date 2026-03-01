@@ -1,6 +1,6 @@
 server:
   port: 8050
-
+  forward-headers-strategy: framework
 spring:
   application:
     name: product-catalog-svc
@@ -41,6 +41,9 @@ management:
 springdoc:
   swagger-ui:
     enabled: true
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
 aws:
   dynamodb:
     region: ap-south-1
