@@ -1,8 +1,10 @@
 package com.mcart.productcatalogsvc.service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 
 import com.mcart.productcatalogsvc.entity.UserAccount;
@@ -53,6 +55,7 @@ public class UserService {
     public Mono<UserProfile> saveOrUpdateProfile(UUID userId, UserProfile profile) {
         profile.setUserId(userId);
         profile.setUpdatedAt(LocalDateTime.now());
+        profile.setPreferences(Optional.ofNullable(profile).map(UserProfile::getPreferences).filter(ObjectUtils::isNotEmpty).orElse(null));
         return profileRepo.save(profile);
     }
 
@@ -69,8 +72,9 @@ public class UserService {
     }
 
     public Mono<UserAddress> addAddress(UUID userId, UserAddress address) {
-        address.setAddressId(UUID.randomUUID());
+        //address.setAddressId(UUID.randomUUID());
         address.setUserId(userId);
+        address.setType(Optional.ofNullable(address.getType()).map(String::toLowerCase).orElse("home"));
         address.setCreatedAt(LocalDateTime.now());
         address.setUpdatedAt(LocalDateTime.now());
         return addressRepo.save(address);
@@ -80,7 +84,7 @@ public class UserService {
         return addressRepo.findById(addressId)
                 .filter(addr -> addr.getUserId().equals(userId))
                 .flatMap(existing -> {
-                    existing.setType(updated.getType());
+                    existing.setType(Optional.ofNullable(updated.getType()).map(String::toLowerCase).orElse("home"));
                     existing.setAddressJson(updated.getAddressJson());
                     existing.setIsDefault(updated.getIsDefault());
                     existing.setUpdatedAt(LocalDateTime.now());

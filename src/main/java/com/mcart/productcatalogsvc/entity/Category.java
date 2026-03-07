@@ -40,4 +40,13 @@ public class Category {
  public void setParentCategoryId(String parentCategoryId) {
      this.parentCategoryId = parentCategoryId;
  }
+ 
+ @DynamoDbSecondaryPartitionKey(indexNames = "GSI_CategoryBySlug")
+ public String getSlug() {
+     return slug;
+ }
+
+ public void setSlug(String slug) {
+     this.slug = slug;
+ }
 }

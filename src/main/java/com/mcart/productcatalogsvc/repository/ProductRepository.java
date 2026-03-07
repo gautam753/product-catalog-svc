@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
@@ -136,73 +137,223 @@ public class ProductRepository {
         ).then();
     }
     
-    /**
-     * Advanced filtering with pagination & sorting
-     */
     public Flux<Product> filterProducts(ProductFilterDto filter) {
+        // Default pagination
+        int page = Math.max(0, filter.getPage() != null ? filter.getPage() : 0);
+        int size = Math.max(1, filter.getSize() != null ? filter.getSize() : 20);
+
+        // 1. If categoryId is present → start from ProductCategoryMapping (efficient)
+        if (filter.getCategoryId() != null) {
+            return filterByCategoryWithAdditionalFilters(filter);
+        }
+
+        // 2. No category → full scan + dynamic filter expression
         ScanEnhancedRequest.Builder scanBuilder = ScanEnhancedRequest.builder();
 
-        // Build filter expression dynamically
         Expression.Builder exprBuilder = Expression.builder();
-
         List<String> conditions = new ArrayList<>();
         Map<String, AttributeValue> values = new HashMap<>();
 
-        if (filter.getCategoryId() != null) {
-            // For category filter, use ProductCategoryMapping table first, then fetch products
-            // (better performance than scan)
-            return filterByCategory(filter.getCategoryId());
-        }
-
+        // Brand
         if (filter.getBrandId() != null) {
             conditions.add("brandId = :brandId");
             values.put(":brandId", AttributeValue.builder().s(filter.getBrandId()).build());
         }
+        
+        if (filter.getBrandName() != null) {
+            conditions.add("brandName = :brandName");
+            values.put(":brandName", AttributeValue.builder().s(filter.getBrandName()).build());
+        }
 
+        // Price range
         if (filter.getMinPrice() != null) {
             conditions.add("salePrice >= :minPrice");
             values.put(":minPrice", AttributeValue.builder().n(filter.getMinPrice().toString()).build());
         }
-
         if (filter.getMaxPrice() != null) {
             conditions.add("salePrice <= :maxPrice");
             values.put(":maxPrice", AttributeValue.builder().n(filter.getMaxPrice().toString()).build());
         }
 
+        // Gender
         if (filter.getGender() != null) {
             conditions.add("gender = :gender");
             values.put(":gender", AttributeValue.builder().s(filter.getGender()).build());
         }
 
+        // Material (contains)
         if (filter.getMaterial() != null) {
             conditions.add("contains(material, :material)");
             values.put(":material", AttributeValue.builder().s(filter.getMaterial()).build());
         }
 
-        if (filter.getIsActive() != null && filter.getIsActive()) {
+        // Active
+        if (Boolean.TRUE.equals(filter.getIsActive())) {
             conditions.add("isActive = :active");
             values.put(":active", AttributeValue.builder().bool(true).build());
         }
 
-        if (filter.getOnSale() != null && filter.getOnSale()) {
+        // On sale
+        if (Boolean.TRUE.equals(filter.getOnSale())) {
             conditions.add("salePrice < basePrice");
         }
 
+        // Multi-value filters (sizes, colors) - using OR + contains
+        if (filter.getSizes() != null && !filter.getSizes().isEmpty()) {
+            List<String> sizeConditions = filter.getSizes().stream()
+                .map(s -> "contains(availableSizes, :size_" + s + ")")
+                .collect(Collectors.toList());
+            conditions.add("(" + String.join(" OR ", sizeConditions) + ")");
+            int i = 0;
+            for (String size_ : filter.getSizes()) {
+                values.put(":size_" + size_, AttributeValue.builder().s(size_).build());
+                i++;
+            }
+        }
+
+        if (filter.getColors() != null && !filter.getColors().isEmpty()) {
+            List<String> colorConditions = filter.getColors().stream()
+                .map(c -> "contains(availableColors, :color_" + c + ")")
+                .collect(Collectors.toList());
+            conditions.add("(" + String.join(" OR ", colorConditions) + ")");
+            int i = 0;
+            for (String color : filter.getColors()) {
+                values.put(":color_" + color, AttributeValue.builder().s(color).build());
+                i++;
+            }
+        }
+
+        // Apply filter expression if any conditions exist
         if (!conditions.isEmpty()) {
             String filterExpr = String.join(" AND ", conditions);
             exprBuilder.expression(filterExpr).expressionValues(values);
             scanBuilder.filterExpression(exprBuilder.build());
         }
 
-        // Pagination
-        int page = filter.getPage() != null ? filter.getPage() : 0;
-        int size = filter.getSize() != null ? filter.getSize() : 20;
-
-        // Sorting (DynamoDB scan doesn't support sort directly – do it in memory or use GSI)
+        // Execute scan
         return Flux.from(productTable.scan(scanBuilder.build()).items())
-            .skip(page * size)
-            .take(size)
-            .sort(getComparator(filter.getSortBy()));
+            .sort(getComparator(filter.getSortBy()))      // in-memory sort
+            .skip((long) page * size)                     // in-memory pagination
+            .take(size);
+    }
+
+    /**
+     * When categoryId is provided → first get product IDs from mapping table,
+     * then fetch products and apply remaining filters
+     */
+    private Flux<Product> filterByCategoryWithAdditionalFilters(ProductFilterDto filter) {
+        String categoryId = filter.getCategoryId();
+
+        // Get all product IDs in this category
+        return mappingRepository.findByCategoryId(categoryId)
+            .map(ProductCategoryMapping::getProductId)
+            .collectList()
+            .flatMapMany(productIds -> {
+                if (productIds.isEmpty()) {
+                    return Flux.empty();
+                }
+
+                // Now fetch products with additional filters
+                ScanEnhancedRequest.Builder scanBuilder = ScanEnhancedRequest.builder();
+
+                Expression.Builder exprBuilder = Expression.builder();
+                List<String> conditions = new ArrayList<>();
+                Map<String, AttributeValue> values = new HashMap<>();
+
+                // Product ID IN (...) 
+                if (!productIds.isEmpty()) {
+                    List<AttributeValue> idValues = productIds.stream()
+                        .map(id -> AttributeValue.builder().s(id).build())
+                        .collect(Collectors.toList());
+                    conditions.add("productId IN (" + 
+                        IntStream.range(0, idValues.size())
+                            .mapToObj(i -> ":id" + i)
+                            .collect(Collectors.joining(", ")) + ")");
+                    for (int i = 0; i < idValues.size(); i++) {
+                        values.put(":id" + i, idValues.get(i));
+                    }
+                }
+
+                // Apply remaining filters (brand, price, gender, etc.) - same as above
+                if (filter.getBrandId() != null) {
+                    conditions.add("brandId = :brandId");
+                    values.put(":brandId", AttributeValue.builder().s(filter.getBrandId()).build());
+                }
+                
+                if (filter.getBrandName() != null) {
+                    conditions.add("brandName = :brandName");
+                    values.put(":brandName", AttributeValue.builder().s(filter.getBrandName()).build());
+                }
+                
+                // Price range
+                if (filter.getMinPrice() != null) {
+                    conditions.add("salePrice >= :minPrice");
+                    values.put(":minPrice", AttributeValue.builder().n(filter.getMinPrice().toString()).build());
+                }
+                if (filter.getMaxPrice() != null) {
+                    conditions.add("salePrice <= :maxPrice");
+                    values.put(":maxPrice", AttributeValue.builder().n(filter.getMaxPrice().toString()).build());
+                }
+
+                // Gender
+                if (filter.getGender() != null) {
+                    conditions.add("gender = :gender");
+                    values.put(":gender", AttributeValue.builder().s(filter.getGender()).build());
+                }
+
+                // Material (contains)
+                if (filter.getMaterial() != null) {
+                    conditions.add("contains(material, :material)");
+                    values.put(":material", AttributeValue.builder().s(filter.getMaterial()).build());
+                }
+
+                // Active
+                if (Boolean.TRUE.equals(filter.getIsActive())) {
+                    conditions.add("isActive = :active");
+                    values.put(":active", AttributeValue.builder().bool(true).build());
+                }
+
+                // On sale
+                if (Boolean.TRUE.equals(filter.getOnSale())) {
+                    conditions.add("salePrice < basePrice");
+                }
+                
+             // Multi-value filters (sizes, colors) - using OR + contains
+                if (filter.getSizes() != null && !filter.getSizes().isEmpty()) {
+                    List<String> sizeConditions = filter.getSizes().stream()
+                        .map(s -> "contains(availableSizes, :size_" + s + ")")
+                        .collect(Collectors.toList());
+                    conditions.add("(" + String.join(" OR ", sizeConditions) + ")");
+                    int i = 0;
+                    for (String size_ : filter.getSizes()) {
+                        values.put(":size_" + size_, AttributeValue.builder().s(size_).build());
+                        i++;
+                    }
+                }
+
+                if (filter.getColors() != null && !filter.getColors().isEmpty()) {
+                    List<String> colorConditions = filter.getColors().stream()
+                        .map(c -> "contains(availableColors, :color_" + c + ")")
+                        .collect(Collectors.toList());
+                    conditions.add("(" + String.join(" OR ", colorConditions) + ")");
+                    int i = 0;
+                    for (String color : filter.getColors()) {
+                        values.put(":color_" + color, AttributeValue.builder().s(color).build());
+                        i++;
+                    }
+                }
+
+                if (!conditions.isEmpty()) {
+                    String filterExpr = String.join(" AND ", conditions);
+                    exprBuilder.expression(filterExpr).expressionValues(values);
+                    scanBuilder.filterExpression(exprBuilder.build());
+                }
+
+                return Flux.from(productTable.scan(scanBuilder.build()).items())
+                    .sort(getComparator(filter.getSortBy()))
+                    .skip((long) filter.getPage() * filter.getSize())
+                    .take(filter.getSize());
+            });
     }
 
     // Helper: category filter using mapping table (recommended)
@@ -253,14 +404,20 @@ public class ProductRepository {
         long count = products.size();
 
         // Brands
+        Map<String, String> brandNameBrandIdMap = new HashMap<>();
         Map<String, Long> brandCounts = products.stream()
-            .filter(p -> p.getBrandName() != null)
+            .filter(p -> p.getBrandName() != null && p.getBrandId() != null)
+            .map(p -> {
+            	brandNameBrandIdMap.put(p.getBrandName(), p.getBrandId());
+            	return p;
+            })
             .collect(Collectors.groupingBy(Product::getBrandName, Collectors.counting()));
 
         List<CategoryFilterOptionsDto.FilterOption> brands = brandCounts.entrySet().stream()
             .map(e -> CategoryFilterOptionsDto.FilterOption.builder()
                 .value(e.getKey())
-                .label(e.getKey() + " (" + e.getValue() + ")")
+                //.label(e.getKey() + " (" + e.getValue() + ")")
+                .label(e.getKey())
                 .count(e.getValue())
                 .build())
             .sorted(Comparator.comparing(CategoryFilterOptionsDto.FilterOption::getLabel))

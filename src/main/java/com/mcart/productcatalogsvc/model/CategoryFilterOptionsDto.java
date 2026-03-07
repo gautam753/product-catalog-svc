@@ -29,6 +29,7 @@ public class CategoryFilterOptionsDto {
     @Data
     @Builder
     public static class FilterOption {
+    	private String key;
         private String value;     // e.g. "Levi's", "Blue", "M"
         private String label;     // e.g. "Levi's (45)", "Blue (32)"
         private Long count;       // number of products matching this value

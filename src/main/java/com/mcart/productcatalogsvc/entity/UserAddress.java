@@ -6,6 +6,7 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.Column;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -26,7 +27,7 @@ public class UserAddress {
 
     // JSONB mapped as String
     @Column("address_json")
-    private String addressJson;
+    private Map<String, Object> addressJson;
 
     @Column("is_default")
     private Boolean isDefault;

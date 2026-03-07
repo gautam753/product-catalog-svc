@@ -6,6 +6,7 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -27,7 +28,7 @@ public class UserProfile {
     private String gender;
 
     // JSONB mapped as String
-    private String preferences;
+    private Map<String, Object> preferences;
 
     private LocalDateTime updatedAt;
 }

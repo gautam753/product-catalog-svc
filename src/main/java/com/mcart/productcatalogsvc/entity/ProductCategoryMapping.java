@@ -14,6 +14,7 @@ public class ProductCategoryMapping {
  private String updatedAt;
 
  @DynamoDbPartitionKey
+ @DynamoDbSecondarySortKey(indexNames = "GSI_ProductToCategories")
  public String getCategoryId() {
      return categoryId;
  }
@@ -23,6 +24,7 @@ public class ProductCategoryMapping {
  }
 
  @DynamoDbSortKey
+ @DynamoDbSecondaryPartitionKey(indexNames = "GSI_ProductToCategories")
  public String getProductId() {
      return productId;
  }
