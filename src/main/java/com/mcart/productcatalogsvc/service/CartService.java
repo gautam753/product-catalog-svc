@@ -41,19 +41,20 @@ public class CartService {
         }
 
         String cartPk = pkPrefix;
-        String itemSk = "ITEM#" + request.getProductId() + "#" + request.getVariantId();
+        String variantPart = request.getVariantId() != null ? request.getVariantId() : "DEFAULT";
+        String itemSk = "ITEM#" + request.getProductId() + "#" + variantPart;
 
         // Validate product & variant exist (optional)
         return productRepository.findById(request.getProductId())
             .switchIfEmpty(Mono.error(new NotFoundException("Product not found")))
-            .flatMap(product -> variantRepository.findById(product.getProductId(), request.getVariantId())
+            .flatMap(product -> variantRepository.findById(product.getProductId(), variantPart)
                 .switchIfEmpty(Mono.error(new NotFoundException("Variant not found")))
                 .flatMap(variant -> {
                     CartItem item = new CartItem();
                     item.setPK(cartPk);
                     item.setSK(itemSk);
                     item.setProductId(request.getProductId());
-                    item.setVariantId(request.getVariantId());
+                    item.setVariantId(variant.getVariantId());
                     item.setQuantity(request.getQuantity());
                     item.setPriceAtAddition(variant.getPrice());
                     item.setAddedAt(Instant.now().toString());
