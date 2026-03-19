@@ -43,7 +43,6 @@ public class CartService {
         String cartPk = pkPrefix;
         String variantPart = request.getVariantId() != null ? request.getVariantId() : "DEFAULT";
         String itemSk = "ITEM#" + request.getProductId() + "#" + variantPart;
-
         // Validate product & variant exist (optional)
         return productRepository.findById(request.getProductId())
             .switchIfEmpty(Mono.error(new NotFoundException("Product not found")))
