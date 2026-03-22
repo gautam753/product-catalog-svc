@@ -31,13 +31,6 @@ public class CartController {
     public CartController(CartService cartService) {
         this.cartService = cartService;
     }
-    
-    @GetMapping("/debug")
-    public Mono<Map<String, String>> headers(ServerHttpRequest request) {
-        return Mono.just(
-            request.getHeaders().toSingleValueMap()
-        );
-    }
 
     // POST /api/cart/add
     @PostMapping("/add")

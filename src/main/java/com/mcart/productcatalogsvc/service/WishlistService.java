@@ -1,14 +1,11 @@
+// service/WishlistService.java
 package com.mcart.productcatalogsvc.service;
-
-import java.time.Instant;
-
-import org.springframework.stereotype.Service;
 
 import com.mcart.productcatalogsvc.entity.WishlistItem;
 import com.mcart.productcatalogsvc.model.WishlistItemDto;
 import com.mcart.productcatalogsvc.model.WishlistItemRequestDto;
 import com.mcart.productcatalogsvc.repository.WishlistRepository;
-
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -21,42 +18,56 @@ public class WishlistService {
         this.wishlistRepository = wishlistRepository;
     }
 
-    // Add to wishlist (authenticated only)
+    // POST /wishlist/add
     public Mono<Void> addToWishlist(String userId, WishlistItemRequestDto request) {
-        String pk = "USER#" + userId;
-        String sk = "ITEM#" + request.getProductId() +
-            (request.getVariantId() != null ? "#" + request.getVariantId() : "");
+        boolean hasVariant = request.getVariantId() != null;
 
-        WishlistItem item = new WishlistItem();
-        item.setPK(pk);
-        item.setSK(sk);
-        item.setProductId(request.getProductId());
-        item.setVariantId(request.getVariantId());
-        item.setPriority(request.getPriority());
-        item.setNotes(request.getNotes());
-        item.setAddedAt(Instant.now().toString());
+        // Upsert — update notes/priority if item already exists
+        Mono<WishlistItem> existing = hasVariant
+                ? wishlistRepository.findByUserIdAndProductIdAndVariantId(
+                        userId, request.getProductId(), request.getVariantId())
+                : wishlistRepository.findByUserIdAndProductIdAndVariantIdIsNull(
+                        userId, request.getProductId());
 
-        return wishlistRepository.save(item);
+        return existing
+                .flatMap(found -> {
+                    // update in place
+                    found.setPriority(request.getPriority());
+                    found.setNotes(request.getNotes());
+                    return wishlistRepository.save(found);
+                })
+                .switchIfEmpty(Mono.defer(() -> {
+                    // insert new
+                    WishlistItem item = new WishlistItem();
+                    item.setUserId(userId);
+                    item.setProductId(request.getProductId());
+                    item.setVariantId(request.getVariantId());   // null is fine
+                    item.setPriority(request.getPriority());
+                    item.setNotes(request.getNotes());
+                    return wishlistRepository.save(item);
+                }))
+                .then();
     }
 
-    // Remove from wishlist
+    // DELETE /wishlist/remove
     public Mono<Void> removeFromWishlist(String userId, String productId, String variantId) {
-        String pk = "USER#" + userId;
-        String sk = "ITEM#" + productId +
-            (variantId != null ? "#" + variantId : "");
-        return wishlistRepository.deleteItem(pk, sk);
+        if (variantId != null) {
+            return wishlistRepository
+                    .deleteByUserIdAndProductIdAndVariantId(userId, productId, variantId);
+        }
+        return wishlistRepository
+                .deleteByUserIdAndProductIdAndVariantIdIsNull(userId, productId);
     }
 
-    // Get wishlist
+    // GET /wishlist
     public Flux<WishlistItemDto> getWishlist(String userId) {
-        String pk = "USER#" + userId;
-        return wishlistRepository.findByPk(pk)
-            .map(item -> WishlistItemDto.builder()
-                .productId(item.getProductId())
-                .variantId(item.getVariantId())
-                .priority(item.getPriority())
-                .notes(item.getNotes())
-                .addedAt(item.getAddedAt())
-                .build());
+        return wishlistRepository.findByUserId(userId)
+                .map(item -> WishlistItemDto.builder()
+                        .productId(item.getProductId())
+                        .variantId(item.getVariantId())
+                        .priority(item.getPriority())
+                        .notes(item.getNotes())
+                        .addedAt(item.getAddedAt().toString())
+                        .build());
     }
 }

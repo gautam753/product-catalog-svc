@@ -1,37 +1,51 @@
+// entity/CartItem.java
 package com.mcart.productcatalogsvc.entity;
 
 import lombok.Data;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
+import java.math.BigDecimal;
+import java.time.Instant;
 
 @Data
-@DynamoDbBean
+@Table("cart_items")
 public class CartItem {
 
-    private String PK;           // USER#<userId> or GUEST#<token>
-    private String SK;           // CART#<id> or ITEM#<productId>#<variantId>
+    @Id
+    private Long id;
+
+    @Column("cart_id")
+    private Long cartId;
+
+    @Column("product_id")
     private String productId;
+
+    @Column("variant_id")
     private String variantId;
+
+    @Column("quantity")
     private Integer quantity;
-    private Double priceAtAddition;
-    private String addedAt;
-    private String updatedAt;
-    private Long expiresAt;      // TTL for guest carts (Unix epoch seconds)
 
-    @DynamoDbPartitionKey
-    public String getPK() {
-        return PK;
-    }
+    @Column("price_at_addition")
+    private BigDecimal priceAtAddition;
 
-    public void setPK(String PK) {
-        this.PK = PK;
-    }
+    @CreatedDate
+    @Column("added_at")
+    private Instant addedAt;
 
-    @DynamoDbSortKey
-    public String getSK() {
-        return SK;
-    }
+    @LastModifiedDate
+    @Column("updated_at")
+    private Instant updatedAt;
 
-    public void setSK(String SK) {
-        this.SK = SK;
-    }
+    // --- Transient: not persisted, set by service before calling repository ---
+    @Transient
+    private Cart.OwnerType ownerType;   // USER or GUEST
+
+    @Transient
+    private String ownerId;             // userId or guestToken
 }

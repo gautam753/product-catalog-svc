@@ -1,36 +1,42 @@
+// entity/WishlistItem.java
 package com.mcart.productcatalogsvc.entity;
 
 import lombok.Data;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
+import java.time.Instant;
 
 @Data
-@DynamoDbBean
+@Table("wishlist_items")
 public class WishlistItem {
 
-    private String PK;           // USER#<userId>
-    private String SK;           // ITEM#<productId>#<variantId> or ITEM#<productId>
-    private String productId;
-    private String variantId;    // optional
-    private String priority;     // low/medium/high
+    @Id
+    private Long id;
+
+    @Column("user_id")
+    private String userId;          // replaces PK = "USER#<userId>"
+
+    @Column("product_id")
+    private String productId;       // replaces SK = "ITEM#<productId>#<variantId>"
+
+    @Column("variant_id")
+    private String variantId;       // nullable — replaces optional SK segment
+
+    @Column("priority")
+    private String priority;        // low / medium / high
+
+    @Column("notes")
     private String notes;
-    private String addedAt;
-    private String updatedAt;
 
-    @DynamoDbPartitionKey
-    public String getPK() {
-        return PK;
-    }
+    @CreatedDate
+    @Column("added_at")
+    private Instant addedAt;
 
-    public void setPK(String PK) {
-        this.PK = PK;
-    }
-
-    @DynamoDbSortKey
-    public String getSK() {
-        return SK;
-    }
-
-    public void setSK(String SK) {
-        this.SK = SK;
-    }
+    @LastModifiedDate
+    @Column("updated_at")
+    private Instant updatedAt;
 }

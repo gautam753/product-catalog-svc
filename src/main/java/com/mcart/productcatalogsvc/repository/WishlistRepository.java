@@ -1,41 +1,33 @@
+// repository/WishlistRepository.java
 package com.mcart.productcatalogsvc.repository;
 
-import org.springframework.stereotype.Repository;
-
 import com.mcart.productcatalogsvc.entity.WishlistItem;
-
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbAsyncTable;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.*;
 
 @Repository
-public class WishlistRepository {
+public interface WishlistRepository extends ReactiveCrudRepository<WishlistItem, Long> {
 
- private final DynamoDbAsyncTable<WishlistItem> wishlistTable;
+    // Replaces: findByPk("USER#<userId>")
+    Flux<WishlistItem> findByUserId(String userId);
 
- public WishlistRepository(DynamoDbEnhancedAsyncClient enhancedClient) {
-     this.wishlistTable = enhancedClient.table("mcart-Wishlists", TableSchema.fromBean(WishlistItem.class));
- }
+    // Replaces: deleteItem(pk, sk) where sk = "ITEM#<productId>#<variantId>"
+    Mono<Void> deleteByUserIdAndProductIdAndVariantId(
+            String userId, String productId, String variantId);
 
- public Mono<Void> save(WishlistItem item) {
-     return Mono.fromFuture(wishlistTable.putItem(item));
- }
+    // Replaces: deleteItem(pk, sk) where sk = "ITEM#<productId>" (no variant)
+    @Query("DELETE FROM wishlist_items WHERE user_id = :userId AND product_id = :productId AND variant_id IS NULL")
+    Mono<Void> deleteByUserIdAndProductIdAndVariantIdIsNull(
+            String userId, String productId);
 
- public Mono<Void> deleteItem(String pk, String sk) {
-     return Mono.fromFuture(
-         wishlistTable.deleteItem(DeleteItemEnhancedRequest.builder()
-        	     .key(k -> k.partitionValue(pk).sortValue(sk))
-        	     .build())
-     ).then();
- }
+    // Replaces: findByPk + filter for duplicate check before save
+    Mono<WishlistItem> findByUserIdAndProductIdAndVariantId(
+            String userId, String productId, String variantId);
 
-	public Flux<WishlistItem> findByPk(String pk) {
-		return Flux.from(wishlistTable.query(QueryEnhancedRequest.builder()
-				.queryConditional(QueryConditional.keyEqualTo(Key.builder().partitionValue(pk).build())).build()))
-				.flatMap(page -> Flux.fromIterable(page.items()));
-	}
+    @Query("SELECT * FROM wishlist_items WHERE user_id = :userId AND product_id = :productId AND variant_id IS NULL")
+    Mono<WishlistItem> findByUserIdAndProductIdAndVariantIdIsNull(
+            String userId, String productId);
 }
