@@ -8,6 +8,7 @@ class ProductCatalogSvcApplicationTests {
 
 	@Test
 	void contextLoads() {
+		
 	}
 
 }
